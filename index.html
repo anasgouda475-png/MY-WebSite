@@ -1,0 +1,1800 @@
+<!doctype html>
+<html lang="ar" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anas Mohamed | Frontend Developer</title>
+
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Plus Jakarta Sans", "sans-serif"],
+              display: ["Outfit", "sans-serif"],
+            },
+            colors: {
+              primary: "#6366f1",
+              secondary: "#a855f7",
+              accent: "#06b6d4",
+              gold: "#fbbf24",
+              amber: "#f59e0b",
+              dark: "#030712",
+              darker: "#020617",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: #030712;
+        color: #f8fafc;
+        font-family: "Plus Jakarta Sans", sans-serif;
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* Custom Cursor */
+      .cursor-dot,
+      .cursor-outline {
+        position: fixed;
+        top: 0;
+        left: 0;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        z-index: 9999;
+        pointer-events: none;
+        mix-blend-mode: difference;
+      }
+      .cursor-dot {
+        width: 8px;
+        height: 8px;
+        background: #fff;
+      }
+      .cursor-outline {
+        width: 40px;
+        height: 40px;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        transition:
+          width 0.3s,
+          height 0.3s,
+          background-color 0.3s;
+      }
+      .cursor-outline.hover {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      /* WebGL Canvas */
+      #webgl-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+      }
+
+      /* Noise Overlay */
+      .noise-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 9998;
+        opacity: 0.03;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      }
+
+      /* Gradient Text */
+      .gradient-text {
+        background: linear-gradient(
+          135deg,
+          #6366f1 0%,
+          #a855f7 25%,
+          #06b6d4 50%,
+          #fbbf24 75%,
+          #6366f1 100%
+        );
+        background-size: 300% 300%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: gradient 8s ease infinite;
+      }
+      @keyframes gradient {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      /* Glass Morphism */
+      .glass {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+
+      .glass-strong {
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      /* Magnetic Button */
+      .magnetic-btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem 2.5rem;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        border-radius: 100px;
+        font-weight: 600;
+        overflow: hidden;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .magnetic-btn::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, #a855f7, #6366f1);
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .magnetic-btn:hover::before {
+        opacity: 1;
+      }
+      .magnetic-btn span {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Project Card */
+      .project-card {
+        position: relative;
+        overflow: hidden;
+      }
+      .project-card::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+          rgba(99, 102, 241, 0.3) 0%,
+          transparent 60%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+      }
+      .project-card:hover::after {
+        opacity: 1;
+      }
+
+      /* Loading Screen */
+      .loader {
+        position: fixed;
+        inset: 0;
+        background: #030712;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          opacity 0.5s,
+          visibility 0.5s;
+      }
+      .loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+      .loader-text {
+        font-size: 4rem;
+        font-weight: 900;
+        font-family: "Outfit", sans-serif;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: pulse 2s infinite;
+      }
+
+      /* Scroll Progress */
+      .scroll-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #6366f1, #a855f7, #06b6d4);
+        z-index: 10001;
+        transform-origin: left;
+        transform: scaleX(0);
+      }
+
+      /* Navigation */
+      .nav-link {
+        position: relative;
+        padding: 0.5rem 1rem;
+        transition: color 0.3s;
+      }
+      .nav-link::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: 100px;
+        transform: scale(0);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .nav-link:hover::before,
+      .nav-link.active::before {
+        transform: scale(1);
+      }
+
+      /* Reveal Animation */
+      .reveal-section {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #6366f1, #a855f7);
+        border-radius: 5px;
+      }
+
+      /* Spotlight */
+      .spotlight {
+        position: absolute;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(
+          circle,
+          rgba(99, 102, 241, 0.15) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        z-index: 0;
+      }
+
+      /* Typewriter */
+      .typewriter-cursor {
+        display: inline-block;
+        width: 3px;
+        height: 1em;
+        background: #6366f1;
+        margin-left: 5px;
+        animation: blink 1s infinite;
+      }
+      @keyframes blink {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        51%,
+        100% {
+          opacity: 0;
+        }
+      }
+
+      /* Floating Animation */
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0deg);
+        }
+        50% {
+          transform: translateY(-20px) rotate(5deg);
+        }
+      }
+      .float-element {
+        animation: float 6s ease-in-out infinite;
+      }
+      .float-element:nth-child(2) {
+        animation-delay: -2s;
+      }
+      .float-element:nth-child(3) {
+        animation-delay: -4s;
+      }
+
+      /* Skill Fill Animation */
+      .skill-fill {
+        width: 0;
+        transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      /* Stat Number */
+      .stat-number {
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Featured Project Badge */
+      .featured-badge {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+      }
+    </style>
+    <base target="_blank" />
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+      <div class="loader-text">Anas Mohamed</div>
+    </div>
+
+    <!-- Scroll Progress -->
+    <div class="scroll-progress" id="scroll-progress"></div>
+
+    <!-- Noise Overlay -->
+    <div class="noise-overlay"></div>
+
+    <!-- WebGL Background -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <!-- Spotlight -->
+    <div class="spotlight" id="spotlight"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 transition-all duration-500" id="navbar">
+      <div
+        class="glass-strong px-6 py-4 mx-4 mt-4 rounded-2xl max-w-7xl mx-auto"
+      >
+        <div class="flex items-center justify-between">
+          <a
+            href="#home"
+            class="text-3xl font-display font-black gradient-text tracking-tighter"
+            >Anas Mohamed</a
+          >
+
+          <div class="hidden md:flex items-center gap-1">
+            <a
+              href="#home"
+              class="nav-link text-sm font-medium"
+              data-section="home"
+              >Home</a
+            >
+            <a
+              href="#about"
+              class="nav-link text-sm font-medium"
+              data-section="about"
+              >About</a
+            >
+            <a
+              href="#skills"
+              class="nav-link text-sm font-medium"
+              data-section="skills"
+              >Skills</a
+            >
+            <a
+              href="#projects"
+              class="nav-link text-sm font-medium"
+              data-section="projects"
+              >Projects</a
+            >
+            <a
+              href="#contact"
+              class="nav-link text-sm font-medium"
+              data-section="contact"
+              >Contact</a
+            >
+          </div>
+
+          <a href="#contact" class="hidden md:flex magnetic-btn text-sm">
+            <span>Let's Talk</span>
+          </a>
+
+          <button class="md:hidden text-2xl" id="mobile-menu-btn">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Menu -->
+      <div
+        class="hidden md:hidden glass-strong mx-4 mt-2 rounded-2xl p-6"
+        id="mobile-menu"
+      >
+        <div class="flex flex-col gap-4">
+          <a
+            href="#home"
+            class="text-lg font-medium py-2 border-b border-white/10"
+            >Home</a
+          >
+          <a
+            href="#about"
+            class="text-lg font-medium py-2 border-b border-white/10"
+            >About</a
+          >
+          <a
+            href="#skills"
+            class="text-lg font-medium py-2 border-b border-white/10"
+            >Skills</a
+          >
+          <a
+            href="#projects"
+            class="text-lg font-medium py-2 border-b border-white/10"
+            >Projects</a
+          >
+          <a href="#contact" class="text-lg font-medium py-2">Contact</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section
+      id="home"
+      class="min-h-screen flex items-center justify-center relative pt-32 pb-20 px-4"
+    >
+      <div class="max-w-7xl mx-auto w-full">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+          <div class="order-2 lg:order-1 space-y-8">
+            <div
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border border-primary/30"
+            >
+              <span
+                class="w-2 h-2 rounded-full bg-green-400 animate-pulse"
+              ></span>
+              <span class="text-sm font-medium text-primary"
+                >Available for work</span
+              >
+            </div>
+
+            <h1
+              class="text-6xl md:text-8xl font-display font-black leading-none"
+            >
+              Creative<br />
+              <span class="gradient-text">Developer</span>
+            </h1>
+
+            <div class="text-xl md:text-2xl text-gray-400 font-light h-12">
+              <span id="typewriter"></span
+              ><span class="typewriter-cursor"></span>
+            </div>
+
+            <p class="text-lg text-gray-400 max-w-lg leading-relaxed">
+              I craft digital experiences that merge art with technology.
+              Specializing in building exceptional digital products with modern
+              technologies.
+            </p>
+
+            <div class="flex flex-wrap gap-4">
+              <a href="#projects" class="magnetic-btn group">
+                <span class="flex items-center gap-2">
+                  View Work
+                  <i
+                    class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"
+                  ></i>
+                </span>
+              </a>
+              <a
+                href="#contact"
+                class="px-8 py-4 rounded-full border border-white/20 hover:border-primary hover:text-primary transition-all"
+              >
+                Contact Me
+              </a>
+            </div>
+
+            <div class="flex items-center gap-6 pt-4">
+              <a
+                href="https://github.com/anasgouda475-png"
+                target="_blank"
+                class="w-12 h-12 rounded-full glass flex items-center justify-center hover:bg-primary hover:border-primary transition-all hover:scale-110 group"
+              >
+                <i class="fab fa-github text-xl group-hover:text-white"></i>
+              </a>
+              <a
+                href="www.linkedin.com/in/anas-gouda33"
+                target="_blank"
+                class="w-12 h-12 rounded-full glass flex items-center justify-center hover:bg-blue-600 hover:border-blue-600 transition-all hover:scale-110 group"
+              >
+                <i
+                  class="fab fa-linkedin-in text-xl group-hover:text-white"
+                ></i>
+              </a>
+
+              <a
+                href="mailto:anasmohamedgouda@gmail.com"
+                class="w-12 h-12 rounded-full glass flex items-center justify-center hover:bg-red-500 hover:border-red-500 transition-all hover:scale-110 group"
+              >
+                <i class="fas fa-envelope text-xl group-hover:text-white"></i>
+              </a>
+            </div>
+          </div>
+
+          <div class="order-1 lg:order-2 relative">
+            <div class="relative w-full aspect-square max-w-lg mx-auto">
+              <div
+                class="absolute -top-8 -right-8 w-24 h-24 rounded-2xl glass float-element flex items-center justify-center text-4xl z-10"
+              >
+                ⚡
+              </div>
+              <div
+                class="absolute -bottom-4 -left-8 w-20 h-20 rounded-full glass float-element flex items-center justify-center text-3xl z-10"
+                style="animation-delay: -2s"
+              >
+                🚀
+              </div>
+              <div
+                class="absolute top-1/2 -right-12 w-16 h-16 rounded-full bg-gradient-to-r from-primary to-secondary float-element flex items-center justify-center text-2xl z-10"
+                style="animation-delay: -4s"
+              >
+                💻
+              </div>
+
+              <div class="relative z-0">
+                <div
+                  class="absolute inset-0 bg-gradient-to-tr from-primary via-secondary to-accent rounded-3xl blur-3xl opacity-30 animate-pulse"
+                ></div>
+                <div class="relative glass rounded-3xl p-2 h-full">
+                  <div
+                    class="bg-gray-900 rounded-2xl h-full aspect-square flex items-center justify-center overflow-hidden relative"
+                  >
+                    <div
+                      class="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20"
+                    ></div>
+                    <div
+                      class="text-9xl"
+                      style="animation: float 6s ease-in-out infinite"
+                    >
+                      <img
+                        src="/WhatsApp Image 2026-01-18 at 2.32.25 PM (1).jpeg"
+                      />
+                    </div>
+
+                    <!-- <div
+                      class="absolute top-4 left-4 right-4 glass rounded-lg p-4 font-mono text-xs text-gray-400"
+                    >
+                      <div class="flex gap-2 mb-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                      </div>
+                      <div class="space-y-1">
+                        <div class="text-primary">const</div>
+                        <div class="pl-4">
+                          developer =
+                          <span class="text-secondary">"Anas"</span>;
+                        </div>
+                        <div class="pl-4">
+                          passion = <span class="text-accent">∞</span>;
+                        </div> -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-2 opacity-50"
+      >
+        <span class="text-xs uppercase tracking-widest">Scroll</span>
+        <div
+          class="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2"
+        >
+          <div class="w-1 h-2 bg-white rounded-full animate-bounce"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-32 relative overflow-hidden">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid lg:grid-cols-2 gap-20 items-center">
+          <div class="reveal-section">
+            <h2
+              class="text-sm font-bold text-primary uppercase tracking-widest mb-4"
+            >
+              About Me
+            </h2>
+            <h3
+              class="text-5xl md:text-6xl font-display font-bold mb-8 leading-tight"
+            >
+              Building digital<br />
+              <span class="gradient-text">experiences</span> that matter
+            </h3>
+
+            <div class="space-y-6 text-gray-400 text-lg leading-relaxed">
+              <p>
+                I'm Anas Mohamed, a passionate Frontend Developer based in
+                Cairo, Egypt. With over 3 years of experience in crafting web
+                applications, I specialize in creating seamless user experiences
+                using cutting-edge technologies.
+              </p>
+              <p>
+                My approach combines technical expertise with creative
+                problem-solving. I believe in writing clean, maintainable code
+                while keeping the user at the center of every decision.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 mt-12">
+              <div
+                class="glass rounded-2xl p-6 text-center group hover:border-primary/50 transition-all"
+              >
+                <div
+                  class="text-4xl font-display font-bold text-primary mb-2 stat-number"
+                  data-target="3"
+                >
+                  0
+                </div>
+                <div class="text-sm text-gray-400">Years Experience</div>
+              </div>
+              <div
+                class="glass rounded-2xl p-6 text-center group hover:border-secondary/50 transition-all"
+              >
+                <div
+                  class="text-4xl font-display font-bold text-secondary mb-2 stat-number"
+                  data-target="50"
+                >
+                  0
+                </div>
+                <div class="text-sm text-gray-400">Projects Done</div>
+              </div>
+              <div
+                class="glass rounded-2xl p-6 text-center group hover:border-accent/50 transition-all"
+              >
+                <div
+                  class="text-4xl font-display font-bold text-accent mb-2 stat-number"
+                  data-target="30"
+                >
+                  0
+                </div>
+                <div class="text-sm text-gray-400">Happy Clients</div>
+              </div>
+              <div
+                class="glass rounded-2xl p-6 text-center group hover:border-gold/50 transition-all"
+              >
+                <div
+                  class="text-4xl font-display font-bold text-gold mb-2 stat-number"
+                  data-target="100"
+                >
+                  0
+                </div>
+                <div class="text-sm text-gray-400">Commits/Day</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative reveal-section">
+            <div class="relative">
+              <div
+                class="absolute -inset-4 bg-gradient-to-r from-primary to-secondary rounded-3xl opacity-20 blur-2xl"
+              ></div>
+              <div class="relative glass rounded-3xl p-8 space-y-6">
+                <h4 class="text-2xl font-display font-bold mb-6">
+                  Why Work With Me?
+                </h4>
+
+                <div class="flex gap-4 items-start">
+                  <div
+                    class="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0 text-primary text-xl"
+                  >
+                    <i class="fas fa-bolt"></i>
+                  </div>
+                  <div>
+                    <h5 class="font-bold mb-2">Fast Performance</h5>
+                    <p class="text-gray-400 text-sm">
+                      Optimized code ensuring lightning-fast load times and
+                      smooth interactions.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex gap-4 items-start">
+                  <div
+                    class="w-12 h-12 rounded-xl bg-secondary/20 flex items-center justify-center flex-shrink-0 text-secondary text-xl"
+                  >
+                    <i class="fas fa-mobile-alt"></i>
+                  </div>
+                  <div>
+                    <h5 class="font-bold mb-2">Responsive Design</h5>
+                    <p class="text-gray-400 text-sm">
+                      Pixel-perfect implementations that work flawlessly across
+                      all devices.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex gap-4 items-start">
+                  <div
+                    class="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center flex-shrink-0 text-accent text-xl"
+                  >
+                    <i class="fas fa-rocket"></i>
+                  </div>
+                  <div>
+                    <h5 class="font-bold mb-2">Modern Stack</h5>
+                    <p class="text-gray-400 text-sm">
+                      Using the latest technologies and best practices in web
+                      development.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex gap-4 items-start">
+                  <div
+                    class="w-12 h-12 rounded-xl bg-gold/20 flex items-center justify-center flex-shrink-0 text-gold text-xl"
+                  >
+                    <i class="fas fa-headset"></i>
+                  </div>
+                  <div>
+                    <h5 class="font-bold mb-2">24/7 Support</h5>
+                    <p class="text-gray-400 text-sm">
+                      Always available to help and maintain your project after
+                      delivery.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section id="skills" class="py-32 relative">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-20 reveal-section">
+          <h2
+            class="text-sm font-bold text-primary uppercase tracking-widest mb-4"
+          >
+            My Arsenal
+          </h2>
+          <h3 class="text-5xl md:text-6xl font-display font-bold">
+            Skills & <span class="gradient-text">Technologies</span>
+          </h3>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div
+            class="glass rounded-3xl p-8 reveal-section group hover:border-primary/30 transition-all duration-500"
+          >
+            <div
+              class="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform"
+            >
+              🎨
+            </div>
+            <h4 class="text-2xl font-display font-bold mb-6">Frontend</h4>
+
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between mb-2 text-sm">
+                  <span>React / Next.js</span>
+                  <span class="text-primary">95%</span>
+                </div>
+                <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    class="skill-fill h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                    data-width="95%"
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-2 text-sm">
+                  <span>Vue.js / Nuxt</span>
+                  <span class="text-primary">85%</span>
+                </div>
+                <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    class="skill-fill h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                    data-width="85%"
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-2 text-sm">
+                  <span>TypeScript</span>
+                  <span class="text-primary">90%</span>
+                </div>
+                <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    class="skill-fill h-full bg-gradient-to-r from-primary to-secondary rounded-full"
+                    data-width="90%"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="glass rounded-3xl p-8 reveal-section group hover:border-secondary/30 transition-all duration-500"
+          >
+            <div
+              class="w-16 h-16 rounded-2xl bg-secondary/20 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform"
+            >
+              💅
+            </div>
+            <h4 class="text-2xl font-display font-bold mb-6">Styling</h4>
+
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between mb-2 text-sm">
+                  <span>Tailwind CSS</span>
+                  <span class="text-secondary">98%</span>
+                </div>
+                <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    class="skill-fill h-full bg-gradient-to-r from-secondary to-accent rounded-full"
+                    data-width="98%"
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-2 text-sm">
+                  <span>SASS / SCSS</span>
+                  <span class="text-secondary">90%</span>
+                </div>
+                <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    class="skill-fill h-full bg-gradient-to-r from-secondary to-accent rounded-full"
+                    data-width="90%"
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-2 text-sm">
+                  <span>Framer Motion</span>
+                  <span class="text-secondary">85%</span>
+                </div>
+                <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    class="skill-fill h-full bg-gradient-to-r from-secondary to-accent rounded-full"
+                    data-width="85%"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="glass rounded-3xl p-8 reveal-section group hover:border-accent/30 transition-all duration-500"
+          >
+            <div
+              class="w-16 h-16 rounded-2xl bg-accent/20 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform"
+            >
+              🛠️
+            </div>
+            <h4 class="text-2xl font-display font-bold mb-6">Tools</h4>
+
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between mb-2 text-sm">
+                  <span>Git / GitHub</span>
+                  <span class="text-accent">95%</span>
+                </div>
+                <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    class="skill-fill h-full bg-gradient-to-r from-accent to-primary rounded-full"
+                    data-width="95%"
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-2 text-sm">
+                  <span>Figma</span>
+                  <span class="text-accent">80%</span>
+                </div>
+                <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    class="skill-fill h-full bg-gradient-to-r from-accent to-primary rounded-full"
+                    data-width="80%"
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-2 text-sm">
+                  <span>Docker</span>
+                  <span class="text-accent">75%</span>
+                </div>
+                <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    class="skill-fill h-full bg-gradient-to-r from-accent to-primary rounded-full"
+                    data-width="75%"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-20 flex flex-wrap justify-center gap-8 reveal-section">
+          <div
+            class="w-20 h-20 rounded-2xl glass flex items-center justify-center text-4xl hover:scale-110 hover:border-primary/50 transition-all cursor-pointer group"
+            title="React"
+          >
+            <i class="fab fa-react text-cyan-400 group-hover:animate-spin"></i>
+          </div>
+          <div
+            class="w-20 h-20 rounded-2xl glass flex items-center justify-center text-4xl hover:scale-110 hover:border-secondary/50 transition-all cursor-pointer group"
+            title="Vue"
+          >
+            <i class="fab fa-vuejs text-green-500"></i>
+          </div>
+          <div
+            class="w-20 h-20 rounded-2xl glass flex items-center justify-center text-4xl hover:scale-110 hover:border-yellow-500/50 transition-all cursor-pointer group"
+            title="JavaScript"
+          >
+            <i class="fab fa-js text-yellow-400"></i>
+          </div>
+          <div
+            class="w-20 h-20 rounded-2xl glass flex items-center justify-center text-4xl hover:scale-110 hover:border-blue-500/50 transition-all cursor-pointer group"
+            title="TypeScript"
+          >
+            <i class="fas fa-code text-blue-500"></i>
+          </div>
+          <div
+            class="w-20 h-20 rounded-2xl glass flex items-center justify-center text-4xl hover:scale-110 hover:border-orange-500/50 transition-all cursor-pointer group"
+            title="HTML5"
+          >
+            <i class="fab fa-html5 text-orange-500"></i>
+          </div>
+          <div
+            class="w-20 h-20 rounded-2xl glass flex items-center justify-center text-4xl hover:scale-110 hover:border-blue-400/50 transition-all cursor-pointer group"
+            title="CSS3"
+          >
+            <i class="fab fa-css3-alt text-blue-400"></i>
+          </div>
+          <div
+            class="w-20 h-20 rounded-2xl glass flex items-center justify-center text-4xl hover:scale-110 hover:border-purple-500/50 transition-all cursor-pointer group"
+            title="Bootstrap"
+          >
+            <i class="fab fa-bootstrap text-purple-500"></i>
+          </div>
+          <div
+            class="w-20 h-20 rounded-2xl glass flex items-center justify-center text-4xl hover:scale-110 hover:border-gray-500/50 transition-all cursor-pointer group"
+            title="Git"
+          >
+            <i class="fab fa-git-alt text-red-500"></i>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects" class="py-32 relative overflow-hidden">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-20 reveal-section">
+          <h2
+            class="text-sm font-bold text-primary uppercase tracking-widest mb-4"
+          >
+            Portfolio
+          </h2>
+          <h3 class="text-5xl md:text-6xl font-display font-bold">
+            Featured <span class="gradient-text">Projects</span>
+          </h3>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Project 1 - Aryaz (Featured) -->
+          <div
+            class="project-card glass rounded-3xl overflow-hidden reveal-section group cursor-pointer md:col-span-2 lg:col-span-2"
+            onmousemove="handleMouseMove(event, this)"
+            onmouseleave="handleMouseLeave(this)"
+          >
+            <div class="relative h-80 bg-gray-800 overflow-hidden">
+              <div
+                class="absolute inset-0 bg-gradient-to-br from-amber-600/30 to-orange-600/30"
+              ></div>
+
+              <!-- Project Preview -->
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="text-center space-y-4">
+                  <div class="text-8xl float-element"><img src ="/Artboard 1 copy 3@1.5x-8.png"></div>
+                  <div
+                    class="glass px-8 py-4 rounded-full inline-block border border-amber-500/30"
+                  >
+                    <span
+                      class="text-amber-400 font-bold text-2xl tracking-wider"
+                      >ARYAZ.SA</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hover Overlay -->
+              <div
+                class="absolute inset-0 bg-dark/90 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center gap-6 backdrop-blur-sm"
+              >
+                <a
+                  href="https://aryaz.sa"
+                  target="_blank"
+                  class="w-20 h-20 rounded-full bg-amber-500 flex items-center justify-center hover:scale-110 transition-transform group/link relative"
+                >
+                  <i class="fas fa-external-link-alt text-3xl text-white"></i>
+                  <span
+                    class="absolute -bottom-10 text-sm text-white font-medium opacity-0 group-hover/link:opacity-100 transition-opacity whitespace-nowrap"
+                    >Visit Live Site</span
+                  >
+                </a>
+                <div
+                  class="w-20 h-20 rounded-full bg-gray-800 flex items-center justify-center cursor-help relative group/lock"
+                  title="Private Repository"
+                >
+                  <i class="fas fa-lock text-3xl text-gray-500"></i>
+                  <span
+                    class="absolute -bottom-10 text-sm text-gray-400 opacity-0 group-hover/lock:opacity-100 transition-opacity whitespace-nowrap"
+                    >Private Code</span
+                  >
+                </div>
+              </div>
+
+              <!-- Featured Badge -->
+              <div
+                class="absolute top-6 right-6 featured-badge text-dark font-bold text-sm rounded-full flex items-center gap-2 px-4 py-2"
+              >
+                <i class="fas fa-crown"></i>
+                Featured Project
+              </div>
+            </div>
+
+            <div class="p-8">
+              <div class="flex items-center justify-between mb-4">
+                <h4
+                  class="text-3xl font-display font-bold group-hover:text-amber-500 transition-colors"
+                >
+                  Aryaz
+                </h4>
+                <span class="text-sm text-gray-500 font-medium">2024</span>
+              </div>
+
+              <p class="text-gray-400 mb-6 text-lg leading-relaxed">
+                Premium Saudi Arabian e-commerce platform specialized in
+                high-quality oils and natural products. Built with modern web
+                technologies focusing on performance, elegant UI/UX, and
+                seamless shopping experience for the Saudi market with full RTL
+                support.
+              </p>
+
+              <!-- Key Features -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <div
+                  class="flex items-center gap-2 text-sm text-gray-400 bg-white/5 px-3 py-2 rounded-lg"
+                >
+                  <i class="fas fa-check-circle text-amber-500"></i>
+                  <span>RTL Support</span>
+                </div>
+                <div
+                  class="flex items-center gap-2 text-sm text-gray-400 bg-white/5 px-3 py-2 rounded-lg"
+                >
+                  <i class="fas fa-check-circle text-amber-500"></i>
+                  <span>Payment Gateway</span>
+                </div>
+                <div
+                  class="flex items-center gap-2 text-sm text-gray-400 bg-white/5 px-3 py-2 rounded-lg"
+                >
+                  <i class="fas fa-check-circle text-amber-500"></i>
+                  <span>Responsive</span>
+                </div>
+                <div
+                  class="flex items-center gap-2 text-sm text-gray-400 bg-white/5 px-3 py-2 rounded-lg"
+                >
+                  <i class="fas fa-check-circle text-amber-500"></i>
+                  <span>SEO Optimized</span>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-2 mb-6">
+                <span
+                  class="px-4 py-2 text-sm rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 font-medium"
+                  >React</span
+                >
+                <span
+                  class="px-4 py-2 text-sm rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30 font-medium"
+                  >Next.js</span
+                >
+                <span
+                  class="px-4 py-2 text-sm rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 font-medium"
+                  >TypeScript</span
+                >
+                <span
+                  class="px-4 py-2 text-sm rounded-full bg-amber-600/20 text-amber-300 border border-amber-600/30 font-medium"
+                  >Tailwind CSS</span
+                >
+                <span
+                  class="px-4 py-2 text-sm rounded-full bg-orange-600/20 text-orange-300 border border-orange-600/30 font-medium"
+                  >Node.js</span
+                >
+                <span
+                  class="px-4 py-2 text-sm rounded-full bg-yellow-600/20 text-yellow-300 border border-yellow-600/30 font-medium"
+                  >MongoDB</span
+                >
+              </div>
+
+              <!-- Project Link -->
+              <div
+                class="flex items-center justify-between pt-6 border-t border-gray-700/50"
+              >
+                <a
+                  href="https://aryaz.sa"
+                  target="_blank"
+                  class="inline-flex items-center gap-2 text-amber-500 hover:text-amber-400 transition-colors font-medium group/link"
+                >
+                  Visit Website
+                  <i
+                    class="fas fa-arrow-right group-hover/link:translate-x-1 transition-transform"
+                  ></i>
+                </a>
+                <span class="text-gray-500 text-sm font-mono">aryaz.sa</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project 2 -->
+          <div
+            class="project-card glass rounded-3xl overflow-hidden reveal-section group cursor-pointer"
+            onmousemove="handleMouseMove(event, this)"
+            onmouseleave="handleMouseLeave(this)"
+          >
+            <div class="relative h-64 bg-gray-800 overflow-hidden">
+              <div
+                class="absolute inset-0 bg-gradient-to-br from-primary/30 to-secondary/30"
+              ></div>
+              <div
+                class="absolute inset-0 flex items-center justify-center text-6xl group-hover:scale-110 transition-transform duration-500"
+              >
+               <img src="/Gemini_Generated_Image_1u2x271u2x271u2x.png" >
+              </div>
+              <div
+                class="absolute inset-0 bg-dark/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4"
+              >
+                <a
+                  href="https://anasgouda475-png.github.io/Age-Calculator/"
+                  class="w-14 h-14 rounded-full bg-primary flex items-center justify-center hover:scale-110 transition-transform"
+                >
+                  <i class="fas fa-external-link-alt text-xl"></i>
+                </a>
+                <a
+                  href="https://github.com/anasgouda475-png"
+                  class="w-14 h-14 rounded-full bg-gray-700 flex items-center justify-center hover:scale-110 transition-transform"
+                >
+                  <i class="fab fa-github text-xl"></i>
+                </a>
+              </div>
+            </div>
+            <div class="p-8">
+              <h4
+                class="text-2xl font-display font-bold mb-3 group-hover:text-primary transition-colors"
+              >
+                Age-Calculator
+              </h4>
+              <p class="text-gray-400 mb-6 line-clamp-2">
+                Real-time data visualization platform with interactive charts,
+                dark mode, and customizable widgets.
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="px-3 py-1 text-xs rounded-full bg-primary/20 text-primary border border-primary/30"
+                  >Html</span
+                >
+                <span
+                  class="px-3 py-1 text-xs rounded-full bg-secondary/20 text-secondary border border-secondary/30"
+                  >css</span
+                >
+                <span
+                  class="px-3 py-1 text-xs rounded-full bg-accent/20 text-accent border border-accent/30"
+                  >js</span
+                >
+              </div>
+            </div>
+          </div>
+
+ 
+
+        <div class="text-center mt-16 reveal-section">
+          <a
+            href="https://github.com/anasgouda475-png"
+            target="_blank"
+            class="magnetic-btn inline-flex"
+          >
+            <span class="flex items-center gap-3">
+              <i class="fab fa-github text-xl"></i>
+              View More on GitHub
+            </span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-32 relative overflow-hidden">
+      <div
+        class="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent"
+      ></div>
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="text-center mb-16 reveal-section">
+          <h2
+            class="text-sm font-bold text-primary uppercase tracking-widest mb-4"
+          >
+            Get In Touch
+          </h2>
+          <h3 class="text-5xl md:text-6xl font-display font-bold mb-6">
+            Let's Create <span class="gradient-text">Something</span> Amazing
+          </h3>
+          <p class="text-gray-400 text-lg max-w-2xl mx-auto">
+            Have a project in mind? Let's collaborate and build something
+            extraordinary together.
+          </p>
+        </div>
+
+        <div class="glass rounded-3xl p-8 md:p-12 reveal-section">
+          <div class="grid md:grid-cols-2 gap-12">
+            <div class="space-y-8">
+              <div>
+                <h4 class="text-2xl font-display font-bold mb-6">
+                  Contact Information
+                </h4>
+                <p class="text-gray-400 mb-8">
+                  Feel free to reach out through any of these channels.
+                </p>
+              </div>
+
+              <div class="space-y-6">
+                <a
+                  href="mailto:anasmohamedgouda@gmail.com"
+                  class="flex items-center gap-4 group p-4 rounded-2xl hover:bg-white/5 transition-all"
+                >
+                  <div
+                    class="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center text-primary text-xl group-hover:scale-110 transition-transform"
+                  >
+                    <i class="fas fa-envelope"></i>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 mb-1">Email</p>
+                    <p
+                      class="font-semibold group-hover:text-primary transition-colors"
+                    >
+                      anasmohamedgouda@gmail.com
+                    </p>
+                  </div>
+                </a>
+
+                <a
+                  href="tel:+201109315594"
+                  class="flex items-center gap-4 group p-4 rounded-2xl hover:bg-white/5 transition-all"
+                >
+                  <div
+                    class="w-14 h-14 rounded-2xl bg-secondary/20 flex items-center justify-center text-secondary text-xl group-hover:scale-110 transition-transform"
+                  >
+                    <i class="fas fa-phone-alt"></i>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 mb-1">Phone</p>
+                    <p
+                      class="font-semibold group-hover:text-secondary transition-colors"
+                    >
+                      01109315594
+                    </p>
+                  </div>
+                </a>
+
+                <div
+                  class="flex items-center gap-4 group p-4 rounded-2xl hover:bg-white/5 transition-all"
+                >
+                  <div
+                    class="w-14 h-14 rounded-2xl bg-accent/20 flex items-center justify-center text-accent text-xl group-hover:scale-110 transition-transform"
+                  >
+                    <i class="fas fa-map-marker-alt"></i>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-500 mb-1">Location</p>
+                    <p class="font-semibold">Cairo, Egypt</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pt-6">
+                <p class="text-sm text-gray-500 mb-4">Follow me on</p>
+                <div class="flex gap-4">
+                  <a
+                    href="#"
+                    class="w-12 h-12 rounded-full glass flex items-center justify-center hover:bg-primary hover:border-primary transition-all hover:-translate-y-1 group"
+                  >
+                    <i class="fab fa-github text-lg group-hover:text-white"></i>
+                  </a>
+                  <a
+                    href="#"
+                    class="w-12 h-12 rounded-full glass flex items-center justify-center hover:bg-blue-600 hover:border-blue-600 transition-all hover:-translate-y-1 group"
+                  >
+                    <i
+                      class="fab fa-linkedin-in text-lg group-hover:text-white"
+                    ></i>
+                  </a>
+                  <a
+                    href="#"
+                    class="w-12 h-12 rounded-full glass flex items-center justify-center hover:bg-sky-500 hover:border-sky-500 transition-all hover:-translate-y-1 group"
+                  >
+                    <i
+                      class="fab fa-twitter text-lg group-hover:text-white"
+                    ></i>
+                  </a>
+                  <a
+                    href="#"
+                    class="w-12 h-12 rounded-full glass flex items-center justify-center hover:bg-pink-600 hover:border-pink-600 transition-all hover:-translate-y-1 group"
+                  >
+                    <i
+                      class="fab fa-instagram text-lg group-hover:text-white"
+                    ></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <form class="space-y-6" onsubmit="handleSubmit(event)">
+              <div class="grid grid-cols-2 gap-6">
+                <div class="col-span-2 md:col-span-1">
+                  <label class="block text-sm font-medium mb-2 text-gray-300"
+                    >Your Name</label
+                  >
+                  <input
+                    type="text"
+                    required
+                    class="w-full px-4 py-4 rounded-xl bg-gray-800/50 border border-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder-gray-600"
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div class="col-span-2 md:col-span-1">
+                  <label class="block text-sm font-medium mb-2 text-gray-300"
+                    >Your Email</label
+                  >
+                  <input
+                    type="email"
+                    required
+                    class="w-full px-4 py-4 rounded-xl bg-gray-800/50 border border-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder-gray-600"
+                    placeholder="john@example.com"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2 text-gray-300"
+                  >Subject</label
+                >
+                <input
+                  type="text"
+                  required
+                  class="w-full px-4 py-4 rounded-xl bg-gray-800/50 border border-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder-gray-600"
+                  placeholder="Project Inquiry"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2 text-gray-300"
+                  >Message</label
+                >
+                <textarea
+                  rows="5"
+                  required
+                  class="w-full px-4 py-4 rounded-xl bg-gray-800/50 border border-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none placeholder-gray-600"
+                  placeholder="Tell me about your project..."
+                ></textarea>
+              </div>
+              <button
+                type="submit"
+                class="w-full py-4 bg-gradient-to-r from-primary to-secondary rounded-xl font-semibold hover:opacity-90 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 group"
+              >
+                Send Message
+                <i
+                  class="fas fa-paper-plane group-hover:translate-x-1 transition-transform"
+                ></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 py-12 relative">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div
+          class="flex flex-col md:flex-row justify-between items-center gap-6"
+        >
+          <div class="flex items-center gap-3">
+            <span class="text-3xl font-display font-black gradient-text"
+              >Anas Mohamed</span
+            >
+            <span class="text-gray-500"
+              >© 2026 Anas Mohamed. All rights reserved.</span
+            >
+          </div>
+          <div class="flex gap-8 text-sm text-gray-400">
+            <a href="#" class="hover:text-white transition-colors"
+              >Privacy Policy</a
+            >
+            <a href="#" class="hover:text-white transition-colors"
+              >Terms of Service</a
+            >
+            <a href="#" class="hover:text-white transition-colors">Resume</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Register GSAP ScrollTrigger
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Loading Screen
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          document.getElementById("loader").classList.add("hidden");
+          initAnimations();
+        }, 1500);
+      });
+
+      // Custom Cursor
+      const cursorDot = document.querySelector(".cursor-dot");
+      const cursorOutline = document.querySelector(".cursor-outline");
+
+      window.addEventListener("mousemove", (e) => {
+        const posX = e.clientX;
+        const posY = e.clientY;
+
+        cursorDot.style.left = `${posX}px`;
+        cursorDot.style.top = `${posY}px`;
+
+        cursorOutline.animate(
+          {
+            left: `${posX}px`,
+            top: `${posY}px`,
+          },
+          { duration: 500, fill: "forwards" },
+        );
+      });
+
+      // Cursor hover effects
+      const interactiveElements = document.querySelectorAll(
+        "a, button, .project-card, .glass",
+      );
+      interactiveElements.forEach((el) => {
+        el.addEventListener("mouseenter", () =>
+          cursorOutline.classList.add("hover"),
+        );
+        el.addEventListener("mouseleave", () =>
+          cursorOutline.classList.remove("hover"),
+        );
+      });
+
+      // Spotlight effect
+      const spotlight = document.getElementById("spotlight");
+      document.addEventListener("mousemove", (e) => {
+        spotlight.style.left = e.clientX + "px";
+        spotlight.style.top = e.clientY + "px";
+      });
+
+      // Scroll Progress
+      window.addEventListener("scroll", () => {
+        const scrolled = window.scrollY;
+        const maxScroll =
+          document.documentElement.scrollHeight - window.innerHeight;
+        const progress = scrolled / maxScroll;
+        document.getElementById("scroll-progress").style.transform =
+          `scaleX(${progress})`;
+      });
+
+      // Typewriter Effect
+      const words = [
+        "Frontend Developer",
+        "UI/UX Designer",
+        "React Specialist",
+        "Creative Coder",
+        "Problem Solver",
+      ];
+      let wordIndex = 0;
+      let charIndex = 0;
+      let isDeleting = false;
+      const typewriterElement = document.getElementById("typewriter");
+
+      function typeWriter() {
+        const currentWord = words[wordIndex];
+
+        if (isDeleting) {
+          typewriterElement.textContent = currentWord.substring(
+            0,
+            charIndex - 1,
+          );
+          charIndex--;
+        } else {
+          typewriterElement.textContent = currentWord.substring(
+            0,
+            charIndex + 1,
+          );
+          charIndex++;
+        }
+
+        let typeSpeed = isDeleting ? 50 : 100;
+
+        if (!isDeleting && charIndex === currentWord.length) {
+          typeSpeed = 2000;
+          isDeleting = true;
+        } else if (isDeleting && charIndex === 0) {
+          isDeleting = false;
+          wordIndex = (wordIndex + 1) % words.length;
+          typeSpeed = 500;
+        }
+
+        setTimeout(typeWriter, typeSpeed);
+      }
+      setTimeout(typeWriter, 1000);
+
+      // Initialize Animations
+      function initAnimations() {
+        // Reveal sections
+        gsap.utils.toArray(".reveal-section").forEach((section) => {
+          gsap.to(section, {
+            scrollTrigger: {
+              trigger: section,
+              start: "top 80%",
+              toggleActions: "play none none reverse",
+            },
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            ease: "power3.out",
+          });
+        });
+
+        // Skill bars animation
+        gsap.utils.toArray(".skill-fill").forEach((bar) => {
+          const width = bar.getAttribute("data-width");
+          gsap.to(bar, {
+            scrollTrigger: {
+              trigger: bar,
+              start: "top 85%",
+            },
+            width: width,
+            duration: 1.5,
+            ease: "power3.out",
+          });
+        });
+
+        // Stat numbers counter
+        gsap.utils.toArray(".stat-number").forEach((stat) => {
+          const target = parseInt(stat.getAttribute("data-target"));
+          gsap.to(stat, {
+            scrollTrigger: {
+              trigger: stat,
+              start: "top 85%",
+            },
+            innerHTML: target,
+            duration: 2,
+            snap: { innerHTML: 1 },
+            ease: "power2.out",
+          });
+        });
+      }
+
+      // Project card mouse move effect
+      function handleMouseMove(e, card) {
+        const rect = card.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        card.style.setProperty("--mouse-x", `${x}%`);
+        card.style.setProperty("--mouse-y", `${y}%`);
+      }
+
+      function handleMouseLeave(card) {
+        card.style.setProperty("--mouse-x", "50%");
+        card.style.setProperty("--mouse-y", "50%");
+      }
+
+      // Mobile menu toggle
+      const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+      const mobileMenu = document.getElementById("mobile-menu");
+
+      mobileMenuBtn.addEventListener("click", () => {
+        mobileMenu.classList.toggle("hidden");
+      });
+
+      // Close mobile menu on link click
+      mobileMenu.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => {
+          mobileMenu.classList.add("hidden");
+        });
+      });
+
+      // Smooth scroll
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        });
+      });
+
+      // Active nav link on scroll
+      const sections = document.querySelectorAll("section");
+      const navLinks = document.querySelectorAll(".nav-link");
+
+      window.addEventListener("scroll", () => {
+        let current = "";
+        sections.forEach((section) => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.clientHeight;
+          if (scrollY >= sectionTop - 200) {
+            current = section.getAttribute("id");
+          }
+        });
+
+        navLinks.forEach((link) => {
+          link.classList.remove("active");
+          if (link.getAttribute("data-section") === current) {
+            link.classList.add("active");
+          }
+        });
+      });
+
+      // Form submission
+      function handleSubmit(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector("button");
+        const originalText = btn.innerHTML;
+
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        btn.disabled = true;
+
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fas fa-check"></i> Message Sent!';
+          btn.classList.remove("from-primary", "to-secondary");
+          btn.classList.add("bg-green-500");
+
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.add("from-primary", "to-secondary");
+            btn.classList.remove("bg-green-500");
+            btn.disabled = false;
+            e.target.reset();
+          }, 3000);
+        }, 2000);
+      }
+
+      // WebGL Background
+      const canvas = document.getElementById("webgl-canvas");
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000,
+      );
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: true,
+      });
+
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      // Create particles
+      const particlesGeometry = new THREE.BufferGeometry();
+      const particlesCount = 1500;
+      const posArray = new Float32Array(particlesCount * 3);
+
+      for (let i = 0; i < particlesCount * 3; i++) {
+        posArray[i] = (Math.random() - 0.5) * 50;
+      }
+
+      particlesGeometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(posArray, 3),
+      );
+
+      const particlesMaterial = new THREE.PointsMaterial({
+        size: 0.02,
+        color: 0x6366f1,
+        transparent: true,
+        opacity: 0.8,
+        blending: THREE.AdditiveBlending,
+      });
+
+      const particlesMesh = new THREE.Points(
+        particlesGeometry,
+        particlesMaterial,
+      );
+      scene.add(particlesMesh);
+
+      camera.position.z = 5;
+
+      // Mouse movement for particles
+      let mouseX = 0;
+      let mouseY = 0;
+
+      document.addEventListener("mousemove", (event) => {
+        mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+        mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+      });
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+
+        particlesMesh.rotation.x += 0.0005;
+        particlesMesh.rotation.y += 0.0005;
+
+        particlesMesh.rotation.x += mouseY * 0.0005;
+        particlesMesh.rotation.y += mouseX * 0.0005;
+
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Resize handler
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // Magnetic button effect
+      const magneticBtns = document.querySelectorAll(".magnetic-btn");
+      magneticBtns.forEach((btn) => {
+        btn.addEventListener("mousemove", (e) => {
+          const rect = btn.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+
+          btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+        });
+
+        btn.addEventListener("mouseleave", () => {
+          btn.style.transform = "translate(0, 0)";
+        });
+      });
+    </script>
+  </body>
+</html>
